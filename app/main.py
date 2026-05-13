@@ -1,9 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from app.core.exceptions import TransactionNotFoundException
+from app.core.logging import setup_logging
 
 from app.db.session import Base, engine
-import app.db.models
 from app.api.router import api_router
-from sqlalchemy import inspect
+
+import app.db.models
+
+setup_logging()
 
 # Create FastAPI app
 app = FastAPI(
@@ -11,8 +17,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-inspector = inspect(engine)
-print("TABLES:", inspector.get_table_names())
+@app.exception_handler(TransactionNotFoundException)
+async def transaction_not_found_handler(
+    request: Request,
+    exc: TransactionNotFoundException,
+):
+    return JSONResponse(
+        status_code=404,
+        content={"detail": exc.message},
+    )
 
 # Register routes
 app.include_router(api_router)

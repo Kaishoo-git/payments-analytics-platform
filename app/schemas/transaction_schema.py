@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 class TransactionCreate(BaseModel):
@@ -9,8 +10,13 @@ class TransactionCreate(BaseModel):
 
 class TransactionResponse(BaseModel):
     id: int
+    user_id: str
+    merchant_id: str
+    amount: float
+    currency: str
     status: str
     risk_score: float
+    created_at: datetime
 
     class Config:
         from_attributes = True

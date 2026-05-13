@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:15
+    restart: always
     container_name: fraud_postgres
     env_file:
       - .env
