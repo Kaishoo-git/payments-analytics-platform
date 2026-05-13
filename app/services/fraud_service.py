@@ -1,10 +1,13 @@
-def calculate_fraud_score(amount, country):
-    score = 0
+class FraudService:
 
-    if amount > 1000:
-        score += 50
-
-    if country != "SG":
-        score += 30
-
-    return min(score, 100)
+    def evaluate(self, amount: float):
+        score = 0
+        if amount > 5000:
+            score += 80
+        if amount > 1000:
+            score += 40
+        if score >= 70:
+            return score, "DECLINE"
+        if score >= 40:
+            return score, "REVIEW"
+        return score, "APPROVE"

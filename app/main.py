@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 
-from app.database.db import Base, engine
-from app.routes.transactions import router as transaction_router
+from app.db.session import Base, engine
+import app.db.models
+from app.api.router import api_router
+from sqlalchemy import inspect
 
 # Create FastAPI app
 app = FastAPI(
@@ -9,11 +11,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+inspector = inspect(engine)
+print("TABLES:", inspector.get_table_names())
 
 # Register routes
-app.include_router(transaction_router)
+app.include_router(api_router)
 
 
 @app.get("/")
