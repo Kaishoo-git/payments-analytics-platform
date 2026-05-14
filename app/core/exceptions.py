@@ -5,9 +5,3 @@ class TransactionNotFoundException(Exception):
             f"Transaction {transaction_id} not found"
         )
         super().__init__(self.message)
-
-
-class FraudDetectionException(Exception):
-    def __init__(self, message="Fraud evaluation failed"):
-        self.message = message
-        super().__init__(self.message)
