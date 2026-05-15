@@ -36,7 +36,6 @@ class TransactionService:
         transaction = Transaction(**transaction_data)
         repository = TransactionRepository()
         result = repository.create(db, transaction)
-        logger.info(f"Creating transaction for user={transaction.user_id}")
         return result
     
     def get_transaction_by_id(self, db: Session, transaction_id: str):
