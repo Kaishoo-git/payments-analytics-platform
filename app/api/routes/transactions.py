@@ -25,9 +25,11 @@ async def create_transaction(
         {
             "transaction_id": tx.id,
             "user_id": tx.user_id,
+            "wallet_id": tx.wallet_id,
+            "merchant_id": tx.merchant_id,
             "amount": tx.amount,
+            "currency": tx.currency,
             "risk_score": tx.risk_score,
-            "status": tx.status,
         }
     )
     return tx

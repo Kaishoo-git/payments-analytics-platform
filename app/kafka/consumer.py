@@ -1,27 +1,30 @@
 import json
 from aiokafka import AIOKafkaConsumer
 
-from app.kafka.topics import TRANSACTION_CREATED, FRAUD_SCORE_GENERATED
+from app.db.session import SessionLocal
+from app.services.transaction_service import TransactionService
+from app.kafka.topics import (
+    TRANSACTION_CREATED,
+    FRAUD_SCORE_GENERATED,
+    TRANSACTION_APPROVED,
+    TRANSACTION_REVIEW,
+    TRANSACTION_DECLINED,
+)
 from app.kafka.producer import (
-    publish,
     start_producer,
     stop_producer,
+    publish,
 )
-
-
-def calculate_fraud_score(event: dict) -> float:
-    amount = event.get("amount", 0)
-    if amount > 1000:
-        return 0.9
-    elif amount > 500:
-        return 0.6
-    return 0.1
 
 
 async def consume_transactions():
     await start_producer()
     consumer = AIOKafkaConsumer(
         TRANSACTION_CREATED,
+        FRAUD_SCORE_GENERATED,
+        TRANSACTION_APPROVED,
+        TRANSACTION_REVIEW,
+        TRANSACTION_DECLINED,
         bootstrap_servers="localhost:9092",
         group_id="fraud-service",
         auto_offset_reset="earliest",
@@ -34,19 +37,53 @@ async def consume_transactions():
     try:
         async for message in consumer:
             event = message.value
-            print(f"Received: {event}")
-            score = calculate_fraud_score(event)
-            flagged = score > 0.8
-            await publish(
-                FRAUD_SCORE_GENERATED,
-                {
-                    "transaction_id": event["transaction_id"],
-                    "user_id": event["user_id"],
-                    "amount": event["amount"],
-                    "risk_score": score,
-                    "flagged": flagged,
-                },
-            )
+            topic = message.topic
+            print(f"Received from {topic}: {event}")
+            if topic == TRANSACTION_CREATED:
+                service = TransactionService()
+                fraud_score, decision = service.calculate_fraud_score(event)
+                await publish(
+                    FRAUD_SCORE_GENERATED,
+                    {
+                        "transaction_id": event["transaction_id"],
+                        "user_id": event["user_id"],
+                        "amount": event["amount"],
+                        "fraud_score": fraud_score,
+                        "decision": decision,
+                    },
+                )
+            elif topic == FRAUD_SCORE_GENERATED:
+                status = event["status"]
+                if status == "APPROVE":
+                    target_topic = TRANSACTION_APPROVED
+                elif status == "REVIEW":
+                    target_topic = TRANSACTION_REVIEW
+                else:
+                    target_topic = TRANSACTION_DECLINED
+                await publish(
+                    target_topic,
+                    {
+                        "transaction_id": event["transaction_id"],
+                        "user_id": event["user_id"],
+                        "amount": event["amount"],
+                        "fraud_score": event["fraud_score"],
+                        "decision": event["decision"],
+                    },
+                )
+            elif topic in [TRANSACTION_APPROVED, TRANSACTION_REVIEW, TRANSACTION_DECLINED]:
+                db = SessionLocal()
+                try:
+                    service = TransactionService()
+                    service.update_transaction_status(
+                        db, 
+                        int(event["transaction_id"]), 
+                        event["decision"]
+                    )
+                    print(f"Updated transaction {event['transaction_id']} to {event['decision']}")
+                except Exception as e:
+                    print(f"Status update error: {e}")
+                finally:
+                    db.close()
 
     except Exception as e:
         print(f"Consumer error: {e}")

@@ -35,6 +35,17 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: host.docker.internal:9092
+  superset:
+    image: apache/superset:latest
+    container_name: superset
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_LOAD_EXAMPLES: "true"
+    depends_on:
+      - postgres
+    volumes:
+      - superset_data:/var/lib/superset
 volumes:
   postgres_data:
   kafka_data:
