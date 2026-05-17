@@ -38,7 +38,7 @@ class Wallet(Base):
     __tablename__ = "wallets"
 
     id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"),nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
     balance = Column(Float, default=0.0)
     currency = Column(String,nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -67,12 +67,12 @@ class Transaction(Base):
     merchant_id = Column(String, ForeignKey("merchants.id"), nullable=False)
     amount = Column(Float, nullable=False)
     currency = Column(String, nullable=False)
-    risk_score = Column(Float, default=0.0)
+    fraud_score = Column(Float, default=None)
     status = Column(String, default=TransactionStatus.CREATED.value, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    user = relationship("User",  back_populates="transactions")
+    user = relationship("User", back_populates="transactions")
     wallet = relationship("Wallet", back_populates="transactions")
     merchant = relationship("Merchant", back_populates="transactions")
     fraud_scores = relationship("FraudScore", back_populates="transaction")

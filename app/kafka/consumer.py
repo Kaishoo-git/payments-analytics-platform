@@ -3,6 +3,8 @@ from aiokafka import AIOKafkaConsumer
 
 from app.db.session import SessionLocal
 from app.services.transaction_service import TransactionService
+from app.services.fraud_service import FraudService
+from app.services.wallet_service import WalletService
 from app.kafka.topics import (
     TRANSACTION_CREATED,
     FRAUD_SCORE_GENERATED,
@@ -41,8 +43,9 @@ async def consume_transactions():
             print(f"Received from {topic}: {event}")
             if topic == TRANSACTION_CREATED:
                 db = SessionLocal()
-                service = TransactionService()
+                service = FraudService()
                 fraud_score, decision = service.calculate_fraud_score(db, event)
+                service.update_fraud_score(db, int(event["transaction_id"]), fraud_score, decision)
                 await publish(
                     FRAUD_SCORE_GENERATED,
                     {
@@ -71,26 +74,44 @@ async def consume_transactions():
                         "decision": event["decision"],
                     },
                 )
-            elif topic in [TRANSACTION_APPROVED, TRANSACTION_REVIEW, TRANSACTION_DECLINED]:
+            elif topic == "TRANSACTION_APPROVED":
                 db = SessionLocal()
-                try:
-                    service = TransactionService()
-                    service.update_transaction_status(
-                        db, 
-                        int(event["transaction_id"]), 
-                        event["decision"]
-                    )
-                    service.add_transaction_event(
-                        db,
-                        int(event["transaction_id"]),
-                        event["decision"],
-                        event["fraud_score"],
-                    )
-                    print(f"Updated transaction {event['transaction_id']} to {event['decision']}")
-                except Exception as e:
-                    print(f"Status update error: {e}")
-                finally:
-                    db.close()
+                transaction_service = TransactionService()
+                transaction_service.update_transaction_status(
+                    db, 
+                    int(event["transaction_id"]), 
+                    event["decision"]
+                )
+                transaction_service.add_transaction_event(
+                    db,
+                    int(event["transaction_id"]),
+                    event["decision"],
+                    event["fraud_score"],
+                )
+                wallet_service = WalletService()
+                wallet_service.update_wallet_balance(
+                    db,
+                    event["user_id"],
+                    event["amount"],
+                    event["currency"],
+                )
+                print(f"Approved transaction {event['transaction_id']} and updated wallet")
+
+            elif topic in [TRANSACTION_REVIEW, TRANSACTION_DECLINED]:
+                db = SessionLocal()
+                service = TransactionService()
+                service.update_transaction_status(
+                    db, 
+                    int(event["transaction_id"]), 
+                    event["decision"]
+                )
+                service.add_transaction_event(
+                    db,
+                    int(event["transaction_id"]),
+                    event["decision"],
+                    event["fraud_score"],
+                )
+                print(f"Updated transaction {event['transaction_id']} to {event['decision']}")
 
     except Exception as e:
         print(f"Consumer error: {e}")

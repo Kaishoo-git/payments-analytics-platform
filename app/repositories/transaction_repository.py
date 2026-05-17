@@ -58,3 +58,33 @@ class TransactionRepository:
         db.commit()
         db.refresh(transaction)
         return transaction
+    
+    def update_fraud_score(self, db: Session, transaction_id: int, score: float, decision: str):
+        transaction = (
+            db
+            .query(Transaction)
+            .filter(Transaction.id == transaction_id)
+            .first()
+        )
+        if not transaction:
+            return None
+        transaction.fraud_score = score
+        transaction.status = decision
+        db.commit()
+        db.refresh(transaction)
+        return transaction
+    
+    def update_wallet_balance(self, db: Session, user_id: str, amount: float, currency: str):
+        wallet = (
+            db
+            .query(Wallet)
+            .filter(Wallet.user_id == user_id)
+            .filter(Wallet.currency == currency)
+            .first()
+        )
+        if not wallet:
+            return None
+        wallet.balance += amount
+        db.commit()
+        db.refresh(wallet)
+        return wallet
