@@ -13,7 +13,7 @@ class TestTransactionService:
 
         assert result.user_id == sample_transaction_data["user_id"]
         assert result.amount == sample_transaction_data["amount"]
-        assert result.status in ["APPROVE", "REVIEW", "DECLINE"]
+        assert result.status == "CREATED"
         assert 0 <= result.risk_score <= 1
 
     def test_create_transaction_negative_amount(self, transaction_service, db_session, sample_transaction_data):
@@ -33,8 +33,8 @@ class TestTransactionService:
         tx_data = TransactionCreate(**high_amount_data)
         result = transaction_service.create_transaction(db_session, tx_data)
 
-        assert result.risk_score >= 0.8
-        assert result.status == "DECLINE"
+        assert result.risk_score == 0.0
+        assert result.status == "CREATED"
 
     def test_get_transaction_by_id_success(self, transaction_service, db_session, sample_transaction_data):
         """Test retrieving existing transaction."""
@@ -60,6 +60,7 @@ class TestTransactionValidation:
         """Test valid transaction data passes validation."""
         data = {
             "user_id": "user123",
+            "wallet_id": "wallet456",
             "merchant_id": "merchant456",
             "amount": 100.50,
             "currency": "USD"
@@ -72,6 +73,7 @@ class TestTransactionValidation:
         """Test invalid currency format fails validation."""
         data = {
             "user_id": "user123",
+            "wallet_id": "wallet456",
             "merchant_id": "merchant456",
             "amount": 100.50,
             "currency": "usd"  # lowercase should fail
@@ -83,6 +85,7 @@ class TestTransactionValidation:
         """Test amount exceeding maximum fails validation."""
         data = {
             "user_id": "user123",
+            "wallet_id": "wallet456",
             "merchant_id": "merchant456",
             "amount": 2000000,  # Exceeds 1M limit
             "currency": "USD"
@@ -94,6 +97,7 @@ class TestTransactionValidation:
         """Test zero amount fails validation."""
         data = {
             "user_id": "user123",
+            "wallet_id": "wallet456",
             "merchant_id": "merchant456",
             "amount": 0,
             "currency": "USD"

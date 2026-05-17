@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from app.db.session import SessionLocal
-from app.db.models.transaction import User, Wallet, Merchant
+from app.db.models.transaction_model import User, Wallet, Merchant
 
 Faker.seed(1)
 fake = Faker()

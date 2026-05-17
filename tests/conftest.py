@@ -48,6 +48,7 @@ def sample_transaction_data():
     """Sample transaction data for testing."""
     return {
         "user_id": "test_user_123",
+        "wallet_id": "test_wallet_123",
         "merchant_id": "test_merchant",
         "amount": 100.50,
         "currency": "USD"

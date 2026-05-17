@@ -40,8 +40,9 @@ async def consume_transactions():
             topic = message.topic
             print(f"Received from {topic}: {event}")
             if topic == TRANSACTION_CREATED:
+                db = SessionLocal()
                 service = TransactionService()
-                fraud_score, decision = service.calculate_fraud_score(event)
+                fraud_score, decision = service.calculate_fraud_score(db, event)
                 await publish(
                     FRAUD_SCORE_GENERATED,
                     {
@@ -53,7 +54,7 @@ async def consume_transactions():
                     },
                 )
             elif topic == FRAUD_SCORE_GENERATED:
-                status = event["status"]
+                status = event["decision"]
                 if status == "APPROVE":
                     target_topic = TRANSACTION_APPROVED
                 elif status == "REVIEW":
@@ -78,6 +79,12 @@ async def consume_transactions():
                         db, 
                         int(event["transaction_id"]), 
                         event["decision"]
+                    )
+                    service.add_transaction_event(
+                        db,
+                        int(event["transaction_id"]),
+                        event["decision"],
+                        event["fraud_score"],
                     )
                     print(f"Updated transaction {event['transaction_id']} to {event['decision']}")
                 except Exception as e:

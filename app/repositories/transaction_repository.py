@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from app.db.models.transaction import Transaction, User, Wallet, Merchant
+from app.db.models.transaction_model import Transaction, TransactionEvent, User, Wallet, Merchant
 from sqlalchemy.orm import Session
 
 class TransactionRepository:
@@ -10,6 +10,17 @@ class TransactionRepository:
         db.commit()
         db.refresh(tx)
         return tx
+
+    def create_event(self, db: Session, transaction_id: int, event_type: str, event_payload: dict):
+        transaction_event = TransactionEvent(
+            transaction_id=transaction_id,
+            event_type=event_type,
+            event_payload=event_payload,
+        )
+        db.add(transaction_event)
+        db.commit()
+        db.refresh(transaction_event)
+        return transaction_event
     
     def get_by_id(self, db: Session, transaction_id: str):
         return db.query(Transaction).filter(Transaction.id == transaction_id).first()

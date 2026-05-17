@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.core.logging import logger
 from app.schemas.transaction_schema import TransactionCreate
-from app.db.models import Transaction
+from app.db.models import Transaction, TransactionStatus
 from app.repositories.transaction_repository import TransactionRepository
 from app.core.exceptions import TransactionNotFoundException
 
@@ -21,14 +21,14 @@ class TransactionService:
             + self._wallet_enrichment_score(db, event.get("wallet_id"), amount)
         )
 
-        risk_score = min(base_score + enrichment, 1.0)
-        if risk_score > 0.8:
-            decision = "DECLINE"
-        elif risk_score > 0.5:
-            decision = "REVIEW"
+        fraud_score = min(base_score + enrichment, 1.0)
+        if fraud_score > 0.8:
+            decision = TransactionStatus.DENIED.value
+        elif fraud_score > 0.5:
+            decision = TransactionStatus.REVIEW.value
         else:
-            decision = "APPROVE"
-        return decision, risk_score
+            decision = TransactionStatus.APPROVE.value
+        return fraud_score, decision
 
     def _user_enrichment_score(self, db: Session, user_id: str):
         repository = TransactionRepository()
@@ -63,35 +63,47 @@ class TransactionService:
         if wallet.currency and wallet.currency != "USD":
             score += 0.05
         return score
-
-    def _base_score(self, tx: TransactionCreate):
-        if tx.amount < 0:
-            raise ValueError("Amount cannot be negative")
-        return 0.95 if tx.amount > 5000 else 0.1
-
-    def _repeated_score(self, tx: TransactionCreate, db: Session):
-        repository = TransactionRepository()
-        count = repository.count_transactions(db, tx)
-        return 0.4 if count > 5 else 0.0
     
+    def _validate_status(self, status: str):
+        valid_statuses = [item.value for item in TransactionStatus]
+        if status not in valid_statuses:
+            raise ValueError(f"Unsupported transaction status: {status}")
+
     def create_transaction(self, db: Session, tx: TransactionCreate):
-        risk_score = 0
-        risk_score += self._base_score(tx)
-        risk_score += self._repeated_score(tx, db)
         transaction_data = tx.model_dump()
-        transaction_data["risk_score"] = risk_score
-        transaction_data["status"] = "CREATED"
+        transaction_data["status"] = TransactionStatus.CREATED.value
         transaction = Transaction(**transaction_data)
         repository = TransactionRepository()
         result = repository.create(db, transaction)
+        repository.create_event(
+            db,
+            result.id,
+            TransactionStatus.CREATED.value,
+            {
+                "user_id": result.user_id,
+                "wallet_id": result.wallet_id,
+                "merchant_id": result.merchant_id,
+                "amount": result.amount,
+                "currency": result.currency,
+            },
+        )
         return result
 
     def update_transaction_status(self, db: Session, transaction_id: int, status: str):
+        self._validate_status(status)
         repository = TransactionRepository()
         transaction = repository.update_status(db, transaction_id, status)
         if not transaction:
             raise TransactionNotFoundException("Transaction not found")
         return transaction
+
+    def add_transaction_event(self, db: Session, transaction_id: int, event_type: str, event_payload: dict):
+        self._validate_status(event_type)
+        repository = TransactionRepository()
+        transaction = repository.get_by_id(db, transaction_id)
+        if not transaction:
+            raise TransactionNotFoundException(transaction_id)
+        return repository.create_event(db, transaction_id, event_type, event_payload)
 
     def get_transaction_by_id(self, db: Session, transaction_id: str):
         repository = TransactionRepository()
