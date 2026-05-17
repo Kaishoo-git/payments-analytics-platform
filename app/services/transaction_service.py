@@ -39,20 +39,26 @@ class TransactionService:
         repository = TransactionRepository()
         transaction = repository.update_status(db, transaction_id, status)
         if not transaction:
-            raise TransactionNotFoundException("Transaction not found")
+            raise TransactionNotFoundException(f"Transaction not found: {transaction_id}")
         return transaction
 
-    def add_transaction_event(self, db: Session, transaction_id: int, event_type: str, event_payload: dict):
+    def add_transaction_event(
+            self, 
+            db: Session, 
+            transaction_id: int, 
+            event_type: str, 
+            event_payload: dict
+        ):
         self._validate_status(event_type)
         repository = TransactionRepository()
         transaction = repository.get_by_id(db, transaction_id)
         if not transaction:
-            raise TransactionNotFoundException(transaction_id)
+            raise TransactionNotFoundException(f"Transaction not found: {transaction_id}")
         return repository.create_event(db, transaction_id, event_type, event_payload)
 
-    def get_transaction_by_id(self, db: Session, transaction_id: str):
+    def get_transaction_by_id(self, db: Session, transaction_id: int):
         repository = TransactionRepository()
         transaction = repository.get_by_id(db, transaction_id)
         if not transaction:
-            raise TransactionNotFoundException("Transaction not found")
+            raise TransactionNotFoundException(f"Transaction not found: {transaction_id}")
         return transaction

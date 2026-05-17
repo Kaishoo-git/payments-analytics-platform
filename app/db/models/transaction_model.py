@@ -20,6 +20,11 @@ class TransactionStatus(str, Enum):
     REVIEW = "REVIEW"
     DENIED = "DENIED"
 
+class FraudDecision(str, Enum):
+    APPROVE = "APPROVE"
+    REVIEW = "REVIEW"
+    DENY = "DENY"
+
 class User(Base):
     __tablename__ = "users"
 
@@ -67,7 +72,6 @@ class Transaction(Base):
     merchant_id = Column(String, ForeignKey("merchants.id"), nullable=False)
     amount = Column(Float, nullable=False)
     currency = Column(String, nullable=False)
-    fraud_score = Column(Float, default=None)
     status = Column(String, default=TransactionStatus.CREATED.value, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

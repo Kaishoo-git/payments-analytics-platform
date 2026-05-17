@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.db.models import TransactionStatus
 from app.repositories.transaction_repository import TransactionRepository
 from app.core.exceptions import TransactionNotFoundException
+from app.db.models.transaction_model import FraudScore
 
 class FraudService:
 
@@ -10,21 +11,24 @@ class FraudService:
         amount = event.get("amount", 0)
         if amount < 0:
             raise ValueError("Amount cannot be negative")
-
-        base_score = 0.95 if amount > 5000 else 0.1
-        enrichment = (
-            self._user_enrichment_score(db, event.get("user_id"))
+        fraud_score = (
+            0.95 if amount > 5000 else 0.1
+            + self._user_enrichment_score(db, event.get("user_id"))
             + self._merchant_enrichment_score(db, event.get("merchant_id"))
         )
-        fraud_score = min(base_score + enrichment, 1.0)
         wallet_amount = self._wallet_balance(db, event.get("wallet_id"))
-        if (fraud_score > 0.8) or (wallet_amount < amount):
+        if fraud_score > 0.8:
+            flagged = True
             decision = TransactionStatus.DENIED.value
         elif fraud_score > 0.5:
+            flagged = True
             decision = TransactionStatus.REVIEW.value
         else:
+            flagged = False
             decision = TransactionStatus.APPROVE.value
-        return fraud_score, decision
+        if wallet_amount < amount:
+            decision = TransactionStatus.DENIED.value
+        return fraud_score, decision, flagged
 
     def _user_enrichment_score(self, db: Session, user_id: str):
         repository = TransactionRepository()
@@ -55,9 +59,16 @@ class FraudService:
             return 0.0
         return wallet.balance
 
-    def update_fraud_score(self, db: Session, transaction_id: int, score: float, decision: str):
+    def add_fraud_score(
+            self,
+            db: Session,
+            transaction_id: int,
+            score: float,
+            decision: str,
+            flagged: bool
+        ):
         repository = TransactionRepository()
-        transaction = repository.update_fraud_score(db, transaction_id, score, decision)
+        transaction = repository.add_fraud_score(db, transaction_id, score, decision, flagged)
         if not transaction:
-            raise TransactionNotFoundException("Transaction not found")
+            raise TransactionNotFoundException(f"Transaction not found: {transaction_id}")
         return transaction

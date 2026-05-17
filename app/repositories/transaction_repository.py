@@ -1,6 +1,14 @@
 from datetime import datetime, timedelta
 
-from app.db.models.transaction_model import Transaction, TransactionEvent, User, Wallet, Merchant
+from app.db.models.transaction_model import (
+    Transaction,
+    TransactionEvent,
+    User,
+    Wallet,
+    Merchant,
+    FraudScore,
+    TransactionStatus,
+)
 from sqlalchemy.orm import Session
 
 class TransactionRepository:
@@ -59,21 +67,18 @@ class TransactionRepository:
         db.refresh(transaction)
         return transaction
     
-    def update_fraud_score(self, db: Session, transaction_id: int, score: float, decision: str):
-        transaction = (
-            db
-            .query(Transaction)
-            .filter(Transaction.id == transaction_id)
-            .first()
+    def add_fraud_score(self, db: Session, transaction_id: int, score: float, decision: str, flagged: bool):
+        fraud_score_event = FraudScore(
+            transaction_id=transaction_id,
+            risk_score=score,
+            decision=decision,
+            flagged=flagged,
         )
-        if not transaction:
-            return None
-        transaction.fraud_score = score
-        transaction.status = decision
+        db.add(fraud_score_event)
         db.commit()
-        db.refresh(transaction)
-        return transaction
-    
+        db.refresh(fraud_score_event)
+        return fraud_score_event
+
     def update_wallet_balance(self, db: Session, user_id: str, amount: float, currency: str):
         wallet = (
             db

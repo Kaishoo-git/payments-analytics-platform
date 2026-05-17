@@ -44,8 +44,8 @@ async def consume_transactions():
             if topic == TRANSACTION_CREATED:
                 db = SessionLocal()
                 service = FraudService()
-                fraud_score, decision = service.calculate_fraud_score(db, event)
-                service.update_fraud_score(db, int(event["transaction_id"]), fraud_score, decision)
+                fraud_score, decision, flagged = service.calculate_fraud_score(db, event)
+                service.add_fraud_score(db, int(event["transaction_id"]), fraud_score, decision, flagged)
                 await publish(
                     FRAUD_SCORE_GENERATED,
                     {
@@ -54,6 +54,7 @@ async def consume_transactions():
                         "amount": event["amount"],
                         "fraud_score": fraud_score,
                         "decision": decision,
+                        "flagged": flagged,
                     },
                 )
             elif topic == FRAUD_SCORE_GENERATED:
