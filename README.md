@@ -25,7 +25,6 @@ PostgreSQL
 [insert here]
 
 
----
 
 ---
 
@@ -145,7 +144,7 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-**5. Populate the Data (in a Separate Terminal)**
+**6. Populate the Data (in a Separate Terminal)**
 ```bash
 python -m scripts.run_consumer
 python -m scripts.seed_data
