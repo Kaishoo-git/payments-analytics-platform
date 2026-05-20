@@ -1,8 +1,5 @@
-TRANSACTION_CREATED = "transaction.created"
-TRANSACTION_APPROVED = "transaction.approved"
-TRANSACTION_REVIEW = "transaction.review"
-TRANSACTION_DECLINED = "transaction.declined"
-FRAUD_SCORE_GENERATED = "fraud_score.generated"
-WALLET_UPDATED = "wallets.updated"
-
+PAYMENT_CREATED = "payment.created"
+PAYMENT_AUTHORISED = "payment.authorised"
+PAYMENT_UNAUTHORISED = "payment.unauthorised"
+PAYMENT_CAPTURED = "payment.captured"
 KAFKA_AUTO_CREATE_TOPICS_ENABLE = "true"

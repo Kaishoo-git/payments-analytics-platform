@@ -9,7 +9,7 @@ from faker import Faker
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-from app.db.models.transaction_model import Wallet, Merchant
+from app.db.models.model import Wallet, Merchant
 
 fake = Faker()
 API_URL = "http://127.0.0.1:8000/transactions/"

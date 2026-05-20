@@ -1,6 +1,6 @@
 import pytest
-from app.schemas.transaction_schema import TransactionCreate
-from app.services.transaction_service import TransactionService
+from app.schemas.payment_schema import TransactionCreate
+from app.services.payment_service import TransactionService
 from app.core.exceptions import TransactionNotFoundException
 
 

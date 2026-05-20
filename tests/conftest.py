@@ -39,7 +39,7 @@ def db_session(test_engine):
 @pytest.fixture
 def transaction_service(db_session):
     """Transaction service fixture."""
-    from app.services.transaction_service import TransactionService
+    from app.services.payment_service import TransactionService
     return TransactionService()
 
 
