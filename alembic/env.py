@@ -21,8 +21,8 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from app.db.base import Base
-import app.db.models
+from app.db.models.model import *
+from app.db.core import Base
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -42,6 +42,7 @@ DATABASE_URL = (
     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}"
     f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
+print(f"Connecting to database at {DATABASE_URL}")
 
 def run_migrations_online() -> None:
     connectable = create_engine(DATABASE_URL, poolclass=pool.NullPool)

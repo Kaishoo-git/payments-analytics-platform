@@ -1,5 +1,2 @@
-PAYMENT_CREATED = "payment.created"
-PAYMENT_AUTHORISED = "payment.authorised"
-PAYMENT_UNAUTHORISED = "payment.unauthorised"
 PAYMENT_CAPTURED = "payment.captured"
 KAFKA_AUTO_CREATE_TOPICS_ENABLE = "true"

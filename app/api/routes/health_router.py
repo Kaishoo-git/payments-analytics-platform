@@ -2,19 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.db.session import get_db
+from app.db.core import get_db
 
-router = APIRouter(tags=["health"])
+router = APIRouter(prefix="/health", tags=["health"])
 
 
-@router.get("/health/db")
+@router.get("/")
 def health_check_db(db: Session = Depends(get_db)):
-    try:
-        db.execute(text("SELECT 1"))
-        return {"status": "ok"}
-
-    except Exception:
-        raise HTTPException(
-            status_code=503,
-            detail="Database unavailable"
-        )
+    return {"status": "ok"}

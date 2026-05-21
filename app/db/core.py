@@ -16,6 +16,7 @@ DATABASE_URL = (
     f"postgresql://{DB_USER}:{DB_PASSWORD}"
     f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
+print(f"Connecting to database at {DATABASE_URL}")
 
 engine = create_engine(DATABASE_URL)
 
@@ -31,5 +32,9 @@ def get_db():
     db = SessionLocal()
     try:
         yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

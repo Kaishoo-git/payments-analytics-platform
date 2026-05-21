@@ -6,3 +6,6 @@ class PaymentCreate(BaseModel):
     merchant_id: int
     card_pan: str
     amount: float
+
+class MerchantCreate(BaseModel):
+    webhook_url: str

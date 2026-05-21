@@ -1,4 +1,5 @@
 import json
+import os
 from aiokafka import AIOKafkaProducer
 
 producer = None
@@ -6,11 +7,11 @@ producer = None
 async def start_producer():
     global producer
     producer = AIOKafkaProducer(
-        bootstrap_servers="localhost:9092",
+        bootstrap_servers="kafka:9092",
         value_serializer=lambda v: json.dumps(v).encode("utf-8"),
     )
     await producer.start()
-    print("Kafka producer started")
+    print(f"Kafka producer started (connecting to kafka:9092)")
 
 
 async def stop_producer():

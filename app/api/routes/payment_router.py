@@ -1,16 +1,14 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
+from app.db.core import get_db
 from app.schema import PaymentCreate
-from app.service import PaymentService
+from app.service import PaymentService, TransactionService
 from app.core.logging import logger
 
 from app.kafka.producer import publish
 from app.kafka.topics import (
-    PAYMENT_CREATED,
-    PAYMENT_AUTHORISED,
-    PAYMENT_UNAUTHORISED,
+    PAYMENT_CAPTURED,
 )
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -22,28 +20,13 @@ async def create_payment(
     db: Session = Depends(get_db)
 ):
     logger.info(f"Creating payment for merchant={payload.merchant_id}")
-    payment = PaymentService().create_payment(db, payload)
-    await publish(
-        PAYMENT_CREATED,
-        {
-            "payment_id": payment.id,
-            "status": payment.status,
-        }
-    )
-    authorised = PaymentService().authorise_payment(db, payment.id)
-    if authorised:
-        await publish(
-            PAYMENT_AUTHORISED,
-            {
-                "payment_id": payment.id,
-                "status": payment.status,
-            }
-        )
-    else:
-        await publish(
-            PAYMENT_UNAUTHORISED,
-            {
-                "payment_id": payment.id,
-                "status": payment.status,
-            }
-        )
+    payment_id = PaymentService().create_payment(db, payload)
+    transaction_id = TransactionService().create_transaction(db, payment_id, "CREATED")
+    status = PaymentService().authorise_payment(db, payment_id)
+    transaction_id = TransactionService().create_transaction(db, payment_id, status)
+    if status == "AUTHORISED":
+        payment_id = PaymentService().capture_payment(db, payment_id)
+        transaction_id = TransactionService().create_transaction(db, payment_id, "CAPTURED")
+        await publish(PAYMENT_CAPTURED, {"payment_id": payment_id, "status": "CAPTURED"})
+        
+    return {"payment_id": payment_id, "status": status}
