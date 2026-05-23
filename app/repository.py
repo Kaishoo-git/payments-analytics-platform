@@ -3,6 +3,7 @@ from app.db.models.model import (
     Payment,
     Merchant,
     Transaction,
+    User,
 )
 from sqlalchemy.orm import Session
 
@@ -59,11 +60,10 @@ class MerchantRepository:
         db.refresh(merchant)
         return merchant.id
     
-class OutboxRepository:
-    def add_event(self, db, event_type, payload):
-        event = Outbox(
-            event_type=event_type,
-            payload=payload,
-            published=False
-        )
-        db.add(event)
+class UserRepository:
+    def create_user(self, db: Session, name: str, card_pan: str):
+        user = User(name=name, card_pan=card_pan)
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+        return user.id

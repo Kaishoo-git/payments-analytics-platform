@@ -10,9 +10,10 @@ from sqlalchemy import (
 from app.db.core import Base
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=True)
     card_pan = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -26,7 +27,7 @@ class Merchant(Base):
 
 
 class Payment(Base):
-    __tablename__ = "payment"
+    __tablename__ = "payments"
 
     id = Column(Integer, primary_key=True, index=True)
     merchant_id = Column(Integer, ForeignKey("merchants.id"), nullable=False)
@@ -37,9 +38,9 @@ class Payment(Base):
 
 
 class Transaction(Base):
-    __tablename__ = "transaction"
+    __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, index=True)
-    payment_id = Column(Integer, ForeignKey("payment.id"), nullable=False)
+    payment_id = Column(Integer, ForeignKey("payments.id"), nullable=False)
     status = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

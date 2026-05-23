@@ -40,9 +40,8 @@ PostgreSQL
 ## Project Structure
 ```
 psychic-octo-bassoon/
-├── alembic/
-│   ├── versions/                    # [add comment here]
-│   ├── env.py                       # [add comment here]
+# App config
+# (Postgres container credentials are set via the following `DB_*` variables)
 │   ├── README.md
 │   └── script.py.mako               # [add comment here]
 ├── app/                             
@@ -110,12 +109,7 @@ cd psychic-octo-bassoon
 
 Create a `.env` file consisting of the following details:
 ```
-# Postgres container
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-POSTGRES_DB=
-
-# App config
+# App config (set Postgres credentials using the DB_* variables below)
 DB_USER=
 DB_PASSWORD=
 DB_HOST=

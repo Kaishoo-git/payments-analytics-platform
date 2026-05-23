@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.schema import PaymentCreate, MerchantCreate
-from app.repository import PaymentRepository, TransactionRepository, MerchantRepository
+from app.schema import PaymentCreate, MerchantCreate, UserCreate
+from app.repository import PaymentRepository, TransactionRepository, MerchantRepository, UserRepository
 
 
 class PaymentService:
@@ -46,3 +46,13 @@ class MerchantService:
             webhook_url=merchantCreate.webhook_url
         )
         return merchant_id, merchantCreate.webhook_url
+
+
+class UserService:
+    def create_user(self, db: Session, userCreate: UserCreate):
+        user_id = UserRepository().create_user(
+            db,
+            name=userCreate.name,
+            card_pan=userCreate.card_pan,
+        )
+        return user_id
