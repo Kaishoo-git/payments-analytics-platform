@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: raw
+    database: FRAUD_ANALYTICS
+    schema: RAW
+    tables:
+      - name: MERCHANTS
+      - name: USERS
+      - name: PAYMENTS
+      - name: TRANSACTIONS
