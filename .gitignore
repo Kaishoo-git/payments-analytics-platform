@@ -4,3 +4,4 @@ virtenv/
 .venv/
 .vscode/
 .pytest_cache/
+airflow/logs/
