@@ -5,3 +5,7 @@ virtenv/
 .vscode/
 .pytest_cache/
 airflow/logs/
+terraform.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform/
