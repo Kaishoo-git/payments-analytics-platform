@@ -1,16 +1,17 @@
 terraform {
   required_providers {
     snowflake = {
-      source  = "Snowflake-Labs/snowflake"
-      version = "~> 0.98"
+      source = "snowflakedb/snowflake"
     }
   }
 }
 
 provider "snowflake" {
-  account                = var.snowflake_account
-  user                   = var.snowflake_user
-  private_key_path       = var.private_key_path
-  private_key_passphrase = var.private_key_passphrase
-  role                   = "TERRAFORM_ROLE"
+    organization_name      = var.organization_name
+    account_name           = var.snowflake_account_name
+    user                   = var.snowflake_user
+    role                   = "ACCOUNTADMIN"
+    authenticator          = "SNOWFLAKE_JWT"
+    private_key            = file(var.private_key_path)
+    private_key_passphrase = var.private_key_passphrase
 }
