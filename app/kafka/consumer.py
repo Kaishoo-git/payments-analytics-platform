@@ -11,6 +11,7 @@ from app.kafka.producer import (
     stop_producer,
     publish,
 )
+from app.core.logging import logger
 
 def run_db_task(task):
     db = SessionLocal()
@@ -18,7 +19,8 @@ def run_db_task(task):
         result = task(db)
         db.commit()
         return result
-    except:
+    except Exception as e:
+        logger.exception(f"Database task failed: {e}")
         db.rollback()
         raise
     finally:
@@ -38,17 +40,17 @@ async def consume_transactions():
     try:
         async for message in consumer:
             event, topic = message.value, message.topic
-            print(f"[Consumer] Received from {topic}: {event}")
+            logger.info(f"[Consumer] Received from {topic}: {event}")
             if topic == PAYMENT_CAPTURED:
                 payment_id = event["payment_id"]
                 webhook_url = run_db_task(
                     lambda db: PaymentService().get_merchant_webhook(db, payment_id)
                 )
-                print(f"Sent webhook for payment_id={payment_id} to webhook_url={webhook_url}")
+                logger.info(f"Sending webhook for payment_id={payment_id} to webhook_url={webhook_url}")
     except Exception as e:
-        print(f"Consumer error: {e}")
+        logger.exception(f"Consumer error: {e}")
 
     finally:
         await consumer.stop()
         await stop_producer()
-        print("Fraud consumer stopped")
+        logger.info("Fraud consumer stopped")

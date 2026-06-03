@@ -14,6 +14,5 @@ async def create_user(
     payload: UserCreate,
     db: Session = Depends(get_db)
 ):
-    logger.info(f"Creating user with name={payload.name} with 1 card_pan")
     user_id = UserService().create_user(db, payload)
     return {"user_id": user_id}

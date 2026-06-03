@@ -15,6 +15,5 @@ async def create_merchant(
     payload: MerchantCreate,
     db: Session = Depends(get_db)
 ):
-    logger.info(f"Creating merchant with webhook URL={payload.webhook_url}")
     merchant_id, webhook_url = MerchantService().create_merchant(db, payload)
     return {"merchant_id": merchant_id, "webhook_url": webhook_url}
