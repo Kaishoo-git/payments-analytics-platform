@@ -2,4 +2,4 @@ SELECT
     ID,
     WEBHOOK_URL,
     CREATED_AT
-FROM {{ source('raw', 'MERCHANTS') }}
+FROM {{ ref('stg_merchants') }}

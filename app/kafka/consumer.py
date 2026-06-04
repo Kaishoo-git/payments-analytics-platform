@@ -44,9 +44,8 @@ async def consume_transactions():
             if topic == PAYMENT_CAPTURED:
                 payment_id = event["payment_id"]
                 webhook_url = run_db_task(
-                    lambda db: PaymentService().get_merchant_webhook(db, payment_id)
+                    lambda db: PaymentService().send_merchant_webhook(db, payment_id)
                 )
-                logger.info(f"Sending webhook for payment_id={payment_id} to webhook_url={webhook_url}")
     except Exception as e:
         logger.exception(f"Consumer error: {e}")
 

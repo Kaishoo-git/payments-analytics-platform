@@ -53,12 +53,7 @@ class PaymentService:
                 return status
         except Exception as e:
             db.rollback()
-            logger.exception(
-                (
-                    "Failed to authorise payment | "
-                    f"payment_id={payment_id}"
-                )
-            )
+            logger.exception(f"Failed to authorise payment | payment_id={payment_id}")
             raise
     
     def capture_payment(self, db: Session, payment_id: int):
@@ -76,18 +71,24 @@ class PaymentService:
             return payment_id
         except Exception as e:
             db.rollback()
-            logger.exception(
-                (
-                    "Failed to capture payment | "
-                    f"payment_id={payment_id}"
-                )
-            )
+            logger.exception(f"Failed to capture payment | payment_id={payment_id}")
             raise
 
-    def get_merchant_webhook(self, db: Session, payment_id: int):
-        return PaymentRepository().get_merchant_webhook(db, payment_id)
-    
-    
+    def send_merchant_webhook(self, db: Session, payment_id: int):
+        try:
+            webhook_url = PaymentRepository().get_merchant_webhook(db, payment_id)
+            if webhook_url is None:
+                logger.warning(f"No webhook URL found for payment_id={payment_id}")
+                raise ValueError("No webhook URL found")
+            TransactionRepository().create_transaction(db, payment_id=payment_id, status="WEBHOOK_SENT")
+            db.commit()
+            logger.info(f"Sending webhook for payment_id={payment_id} to webhook_url={webhook_url}")
+        except Exception as e:
+            db.rollback()
+            logger.exception(f"Failed to send merchant webhook for payment_id={payment_id}: {e}")
+            raise
+
+
 class MerchantService:
     def create_merchant(self, db: Session, merchantCreate: MerchantCreate):
         try:
@@ -100,12 +101,7 @@ class MerchantService:
             return merchant_id, merchantCreate.webhook_url
         except Exception as e:
             db.rollback()
-            logger.exception(
-                (
-                    "Failed to create merchant | "
-                    f"webhook_url={merchantCreate.webhook_url}"
-                )
-            )
+            logger.exception(f"Failed to create merchant | webhook_url={merchantCreate.webhook_url}")
             raise
 
 
@@ -122,10 +118,5 @@ class UserService:
             return user_id
         except Exception as e:
             db.rollback()
-            logger.exception(
-                (
-                    "Failed to create user | "
-                    f"name={userCreate.name} | "
-                )
-            )
+            logger.exception(f"Failed to create user | name={userCreate.name}")
             raise

@@ -1,8 +1,8 @@
 SELECT 
-    ID AS payment_id,
-    MERCHANT_ID AS merchant_id,
-    CARD_PAN AS card_pan,
-    AMOUNT AS payment_amount,
-    STATUS AS payment_status,
-    CREATED_AT AS payment_created_at
+    ID,
+    MERCHANT_ID,
+    LPAD(RIGHT(CARD_PAN, 4), LENGTH(CARD_PAN), 'X') AS MASKED_CARD_PAN,
+    AMOUNT,
+    STATUS,
+    CREATED_AT
 FROM {{ source('raw', 'PAYMENTS') }}

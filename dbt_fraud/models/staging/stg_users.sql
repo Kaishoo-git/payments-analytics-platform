@@ -1,6 +1,6 @@
 SELECT
-    ID AS user_id,
-    CARD_PAN AS card_pan,
-    CREATED_AT AS user_created_at,
-    NAME AS user_name
+    ID,
+    LPAD(RIGHT(CARD_PAN, 4), LENGTH(CARD_PAN), 'X') AS MASKED_CARD_PAN,
+    CREATED_AT,
+    NAME
 FROM {{ source('raw', 'USERS') }}
